@@ -352,32 +352,32 @@ class AlphaBetaPlayer(IsolationPlayer):
         if depth == 0:
             return (-1, -1), self.score(game, self)
 
-        min_or_max_fn, score, best_move, is_alpha = None, None, (-1, -1), True
+        min_or_max_fn, value, best_move, is_alpha = None, None, (-1, -1), True
 
         if self.active_player(game):
-            score = float("-inf")
+            value = float("-inf")
             min_or_max_fn = max
             is_alpha = True
         else:
-            score = float("inf")
+            value = float("inf")
             min_or_max_fn = min
             is_alpha = False
 
         for move in game.get_legal_moves():
             next_ply = game.forecast_move(move)
-            next_ply_score = self.alphabeta_move(next_ply, depth - 1, alpha, beta)[1]
-            if min_or_max_fn(score, next_ply_score) == next_ply_score:
-                score = next_ply_score
+            score = self.alphabeta_move(next_ply, depth - 1, alpha, beta)[1]
+            if min_or_max_fn(value, score) == score:
+                value = score
                 best_move = move
 
             if is_alpha:
-                if score >= beta:
-                    return best_move, score
+                if value >= beta:
+                    return best_move, value
                 else:
-                    alpha = max(score, alpha)
+                    alpha = max(value, alpha)
             else:
-                if score <= alpha:
-                    return best_move, score
+                if value <= alpha:
+                    return best_move, value
                 else:
-                    beta = min(score, beta)
-        return best_move, score
+                    beta = min(value, beta)
+        return best_move, value
