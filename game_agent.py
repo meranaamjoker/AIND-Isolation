@@ -219,6 +219,9 @@ class MinimaxPlayer(IsolationPlayer):
         return self.minimax_move(game, depth)[0]
 
     def minimax_move(self, game, depth):
+        """ 
+        Original MiniMax function - refactored to return score and move both
+        """
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
@@ -279,8 +282,15 @@ class AlphaBetaPlayer(IsolationPlayer):
         """
         self.time_left = time_left
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        # Initialize the best move so that this function returns something
+        # in case the search fails due to timeout
+        best_move = (-1, -1)
+        for i in range(1, 10000):
+            try:
+                best_move = self.alphabeta(game, i)
+            except SearchTimeout:
+                break
+        return best_move
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
         """Implement depth-limited minimax search with alpha-beta pruning as
@@ -330,5 +340,44 @@ class AlphaBetaPlayer(IsolationPlayer):
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        return self.alphabeta_move(game, depth)[0]
+
+    def alphabeta_move(self, game, depth, alpha=float("-inf"), beta=float("inf")):
+        """
+        Original AlphaBeta function - refactored to return score and move both
+        """
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise SearchTimeout()
+
+        if depth == 0:
+            return (-1, -1), self.score(game, self)
+
+        min_or_max_fn, score, best_move, is_alpha = None, None, (-1, -1), True
+
+        if self.active_player(game):
+            score = float("-inf")
+            min_or_max_fn = max
+            is_alpha = True
+        else:
+            score = float("inf")
+            min_or_max_fn = min
+            is_alpha = False
+
+        for move in game.get_legal_moves():
+            next_ply = game.forecast_move(move)
+            next_ply_score = self.alphabeta_move(next_ply, depth - 1, alpha, beta)[1]
+            if min_or_max_fn(score, next_ply_score) == next_ply_score:
+                score = next_ply_score
+                best_move = move
+
+            if is_alpha:
+                if score >= beta:
+                    return best_move, score
+                else:
+                    alpha = max(score, alpha)
+            else:
+                if score <= alpha:
+                    return best_move, score
+                else:
+                    beta = min(score, beta)
+        return best_move, score
