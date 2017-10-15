@@ -15,7 +15,6 @@ def centrality(game, move):
     x, y = move
     cx, cy = (math.ceil(game.width / 2), math.ceil(game.height / 2))
     return (x - cx) ** 2 + (y - cy) ** 2
-    # return (game.width - cx) ** 2 + (game.height - cy) ** 2 - (x - cx) ** 2 - (y - cy) ** 2
 
 
 def freedom_from_common_moves(game, player):
@@ -58,6 +57,16 @@ def custom_score(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    return 0.
+
+
+def x(game, player):
     opp = game.get_opponent(player)
     opp_moves = game.get_legal_moves(opp)
     p_moves = game.get_legal_moves()
@@ -186,9 +195,7 @@ def custom_score_7(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    if game.move_count <= 5:
-        return custom_score_2(game, player)
-    return custom_score_4(game, player)
+    return 0
 
 
 class IsolationPlayer:
@@ -214,11 +221,12 @@ class IsolationPlayer:
         timer expires.
     """
 
-    def __init__(self, search_depth=3, score_fn=custom_score, timeout=10.):
+    def __init__(self, search_depth=3, score_fn=custom_score, timeout=10., name='default-player'):
         self.search_depth = search_depth
         self.score = score_fn
         self.time_left = None
         self.TIMER_THRESHOLD = timeout
+        self.name = name
 
     def active_player(self, game):
         return game.active_player == self;
@@ -320,7 +328,7 @@ class MinimaxPlayer(IsolationPlayer):
         return self.minimax_move(game, depth)[0]
 
     def minimax_move(self, game, depth):
-        """ 
+        """
         Original MiniMax function - refactored to return score and move both
         """
         if self.time_left() < self.TIMER_THRESHOLD:
@@ -453,14 +461,15 @@ class AlphaBetaPlayer(IsolationPlayer):
         if depth == 0:
             return (-1, -1), self.score(game, self)
 
-        current_score, best_move = None, (-1, -1)
-
         if self.active_player(game):
             current_score = float("-inf")
         else:
             current_score = float("inf")
 
-        for move in game.get_legal_moves():
+        legal_moves = game.get_legal_moves()
+        best_move = legal_moves[0] if len(legal_moves) > 0 else (-1, -1)
+
+        for move in legal_moves:
             next_ply_game = game.forecast_move(move)
             next_ply_score = self.alphabeta_move(next_ply_game, depth - 1, alpha, beta)[1]
 
@@ -480,4 +489,8 @@ class AlphaBetaPlayer(IsolationPlayer):
                     return best_move, current_score
                 else:
                     beta = min(next_ply_score, beta)
+
+        if legal_moves and best_move == (-1, -1):
+            print ("Phat gaya", legal_moves, " : ", best_move, " : ", depth, " : ", self.active_player(game))
+
         return best_move, current_score

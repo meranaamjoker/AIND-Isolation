@@ -67,8 +67,9 @@ def play_round(cpu_agent, test_agents, win_counts, num_matches):
                 timeout_count += 1
             elif termination == "forfeit":
                 forfeit_count += 1
+                tff.append(sorted([game.active_player.name, game.inactive_player.name]))
 
-    return timeout_count, forfeit_count
+    return timeout_count, forfeit_count, len(games)
 
 
 def update(total_wins, wins):
@@ -76,32 +77,35 @@ def update(total_wins, wins):
         total_wins[player] += wins[player]
     return total_wins
 
-
+tff = []
 def play_matches(cpu_agents, test_agents, num_matches):
     """Play matches between the test agent and each cpu_agent individually. """
     total_wins = {agent.player: 0 for agent in test_agents}
     total_timeouts = 0.
     total_forfeits = 0.
     total_matches = 2 * num_matches * len(cpu_agents)
+    total_games = 0
 
-    print("\n{:^9}{:^13}".format("Match #", "Opponent") + ''.join(['{:^13}'.format(x[1].name) for x in enumerate(test_agents)]))
-    print("{:^9}{:^13} ".format("", "") +  ' '.join(['{:^5}| {:^5}'.format("Won", "Lost") for x in enumerate(test_agents)]))
+    print("\n{:^9}{:^13}".format("Match # !", "Opponent !") + ''.join(['{:^13} !'.format(x[1].name) for x in enumerate(test_agents)]))
+    print("{:^9}{:^13} !".format("", "") +  ' '.join(['{:^5}| {:^5} !'.format("Won", "Lost") for x in enumerate(test_agents)]))
 
     for idx, agent in enumerate(cpu_agents):
         wins = {key: 0 for (key, value) in test_agents}
         wins[agent.player] = 0
 
-        print("{!s:^9}{:^13}".format(idx + 1, agent.name), end="", flush=True)
+        print("{!s:^9}{:^13} !".format(idx + 1, agent.name), end="", flush=True)
 
         counts = play_round(agent, test_agents, wins, num_matches)
         total_timeouts += counts[0]
         total_forfeits += counts[1]
+        total_games += counts[2]
+
         total_wins = update(total_wins, wins)
         _total = 2 * num_matches
         round_totals = sum([[wins[agent.player], _total - wins[agent.player]]
                             for agent in test_agents], [])
-        print(' ' + ' '.join([
-            '{:^5}| {:^5}'.format(
+        print(' !' + ' '.join([
+            '{:^5}| {:^5} !'.format(
                 round_totals[i],round_totals[i+1]
             ) for i in range(0, len(round_totals), 2)
         ]))
@@ -114,6 +118,7 @@ def play_matches(cpu_agents, test_agents, num_matches):
             ) for x in enumerate(test_agents)
     ]))
 
+    print("Total Games: ", total_matches, total_forfeits, total_timeouts, total_games)
     if total_timeouts:
         print(("\nThere were {} timeouts during the tournament -- make sure " +
                "your agent handles search timeout correctly, and consider " +
@@ -122,6 +127,8 @@ def play_matches(cpu_agents, test_agents, num_matches):
     if total_forfeits:
         print(("\nYour agents forfeited {} games while there were still " +
                "legal moves available to play.\n").format(total_forfeits))
+        print(set(val for key, val in tff))
+        print("\n".join(set(sorted("" + key + ":" + val for key, val in tff))))
 
 
 def main():
@@ -129,14 +136,14 @@ def main():
     # Define two agents to compare -- these agents will play from the same
     # starting position against the same adversaries in the tournament
     test_agents = [
-        Agent(AlphaBetaPlayer(score_fn=improved_score), "AB_Improved"),
-        Agent(AlphaBetaPlayer(score_fn=custom_score), "AB_Custom"),
-        Agent(AlphaBetaPlayer(score_fn=custom_score_2), "AB_Custom_2"),
-        Agent(AlphaBetaPlayer(score_fn=custom_score_3), "AB_Custom_3"),
-        Agent(AlphaBetaPlayer(score_fn=custom_score_4), "AB_Custom_4"),
-        Agent(AlphaBetaPlayer(score_fn=custom_score_5), "AB_Custom_5"),
-        Agent(AlphaBetaPlayer(score_fn=custom_score_6), "AB_Custom_6"),
-        Agent(AlphaBetaPlayer(score_fn=custom_score_7), "AB_Custom_7")
+        Agent(AlphaBetaPlayer(score_fn=improved_score, name="TA AB_Improved"), "AB_Improved"),
+        Agent(AlphaBetaPlayer(score_fn=custom_score, name="TA AB_Custom"), "AB_Custom"),
+        Agent(AlphaBetaPlayer(score_fn=custom_score_2, name="TA AB_Custom_2"), "AB_Custom_2"),
+        Agent(AlphaBetaPlayer(score_fn=custom_score_3, name="TA AB_Custom_3"), "AB_Custom_3"),
+        Agent(AlphaBetaPlayer(score_fn=custom_score_4, name="TA AB_Custom_4"), "AB_Custom_4"),
+        Agent(AlphaBetaPlayer(score_fn=custom_score_5, name="TA AB_Custom_5"), "AB_Custom_5"),
+        Agent(AlphaBetaPlayer(score_fn=custom_score_6, name="TA AB_Custom_6"), "AB_Custom_6"),
+        Agent(AlphaBetaPlayer(score_fn=custom_score_7, name="TA AB_Custom_7"), "AB_Custom_7")
     ]
 
     # Define a collection of agents to compete against the test agents
@@ -146,8 +153,8 @@ def main():
         Agent(AlphaBetaPlayer(score_fn=open_move_score), "AB_Open"),
         Agent(MinimaxPlayer(score_fn=center_score), "MM_Center"),
         Agent(AlphaBetaPlayer(score_fn=center_score), "AB_Center"),
-        Agent(MinimaxPlayer(score_fn=improved_score), "MM_Improved"),
-        Agent(AlphaBetaPlayer(score_fn=improved_score), "AB_Improved")
+        Agent(MinimaxPlayer(score_fn=improved_score, name="CA MM_Improved"), "MM_Improved"),
+        Agent(AlphaBetaPlayer(score_fn=improved_score, name="CA AB_Improved"), "AB_Improved")
     ]
 
     print(DESCRIPTION)
