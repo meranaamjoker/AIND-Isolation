@@ -461,13 +461,14 @@ class AlphaBetaPlayer(IsolationPlayer):
         if depth == 0:
             return (-1, -1), self.score(game, self)
 
+        current_score, best_move = None, (-1, -1)
+
         if self.active_player(game):
             current_score = float("-inf")
         else:
             current_score = float("inf")
 
         legal_moves = game.get_legal_moves()
-        best_move = legal_moves[0] if len(legal_moves) > 0 else (-1, -1)
 
         for move in legal_moves:
             next_ply_game = game.forecast_move(move)
