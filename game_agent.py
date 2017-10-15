@@ -3,11 +3,35 @@ test your agent's strength against a set of known agents using tournament.py
 and include the results in your report.
 """
 import random
+import math
 
 
 class SearchTimeout(Exception):
     """Subclass base exception for code clarity. """
     pass
+
+
+def centrality(game, move):
+    x, y = move
+    cx, cy = (math.ceil(game.width / 2), math.ceil(game.height / 2))
+    return (x - cx) ** 2 + (y - cy) ** 2
+    # return (game.width - cx) ** 2 + (game.height - cy) ** 2 - (x - cx) ** 2 - (y - cy) ** 2
+
+
+def freedom_from_common_moves(game, player):
+    pmoves = game.get_legal_moves()
+    omoves = game.get_legal_moves(game.get_opponent(player))
+    cmoves = pmoves and omoves
+    return 8 - len(cmoves)
+
+
+def best_common_move_to_center(game, player):
+    pmoves = game.get_legal_moves()
+    omoves = game.get_legal_moves(game.get_opponent(player))
+    cmoves = pmoves and omoves
+    if not cmoves:
+        return 0
+    return max(centrality(game, m) for m in cmoves)
 
 
 def custom_score(game, player):
@@ -34,8 +58,14 @@ def custom_score(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
-    raise NotImplementedError
+    opp = game.get_opponent(player)
+    opp_moves = game.get_legal_moves(opp)
+    p_moves = game.get_legal_moves()
+    if not opp_moves:
+        return float("inf")
+    if not p_moves:
+        return float("-inf")
+    return float(len(p_moves) - len(opp_moves) + sum(centrality(game, m) for m in p_moves))
 
 
 def custom_score_2(game, player):
@@ -60,8 +90,13 @@ def custom_score_2(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
-    raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    return float(freedom_from_common_moves(game, player))
 
 
 def custom_score_3(game, player):
@@ -86,8 +121,74 @@ def custom_score_3(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    # TODO: finish this function!
-    raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    ploc_x, ploc_y = game.get_player_location(player)
+    oloc_x, oloc_y = game.get_player_location(game.get_opponent(player))
+    pmoves = game.get_legal_moves(player)
+    omoves = game.get_legal_moves(game.get_opponent(player))
+
+    if math.fabs(ploc_x - oloc_x) >= game.width / 2 and math.fabs(ploc_y - oloc_y) >= game.height / 2:
+        return float(len(pmoves) - len(omoves))
+    return float(freedom_from_common_moves(game, player))
+
+
+def custom_score_4(game, player):
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    ploc_x, ploc_y = game.get_player_location(player)
+    oloc_x, oloc_y = game.get_player_location(game.get_opponent(player))
+
+    return float((ploc_x-oloc_x)**2 + (ploc_y-oloc_y)**2)
+
+
+def custom_score_5(game, player):
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    pmoves = len(game.get_legal_moves())
+    omoves = len(game.get_legal_moves(game.get_opponent(player)))
+
+    return float(pmoves - omoves + centrality(game, game.get_player_location(player)))
+
+
+def custom_score_6(game, player):
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    return float(freedom_from_common_moves(game, player) + best_common_move_to_center(game, player))
+
+
+def custom_score_7(game, player):
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    if game.move_count <= 5:
+        return custom_score_2(game, player)
+    return custom_score_4(game, player)
 
 
 class IsolationPlayer:
