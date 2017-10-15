@@ -153,7 +153,7 @@ def custom_score_4(game, player):
     ploc_x, ploc_y = game.get_player_location(player)
     oloc_x, oloc_y = game.get_player_location(game.get_opponent(player))
 
-    return float((ploc_x-oloc_x)**2 + (ploc_y-oloc_y)**2)
+    return float((ploc_x - oloc_x) ** 2 + (ploc_y - oloc_y) ** 2)
 
 
 def custom_score_5(game, player):
@@ -453,32 +453,31 @@ class AlphaBetaPlayer(IsolationPlayer):
         if depth == 0:
             return (-1, -1), self.score(game, self)
 
-        min_or_max_fn, value, best_move, is_alpha = None, None, (-1, -1), True
+        current_score, best_move = None, (-1, -1)
 
         if self.active_player(game):
-            value = float("-inf")
-            min_or_max_fn = max
-            is_alpha = True
+            current_score = float("-inf")
         else:
-            value = float("inf")
-            min_or_max_fn = min
-            is_alpha = False
+            current_score = float("inf")
 
         for move in game.get_legal_moves():
-            next_ply = game.forecast_move(move)
-            score = self.alphabeta_move(next_ply, depth - 1, alpha, beta)[1]
-            if min_or_max_fn(value, score) == score:
-                value = score
-                best_move = move
+            next_ply_game = game.forecast_move(move)
+            next_ply_score = self.alphabeta_move(next_ply_game, depth - 1, alpha, beta)[1]
 
-            if is_alpha:
-                if value >= beta:
-                    return best_move, value
+            if self.active_player(game):
+                if current_score < next_ply_score:
+                    current_score = next_ply_score
+                    best_move = move
+                if current_score >= beta:
+                    return best_move, current_score
                 else:
-                    alpha = max(value, alpha)
+                    alpha = max(next_ply_score, alpha)
             else:
-                if value <= alpha:
-                    return best_move, value
+                if current_score > next_ply_score:
+                    current_score = next_ply_score
+                    best_move = move
+                if current_score <= alpha:
+                    return best_move, current_score
                 else:
-                    beta = min(value, beta)
-        return best_move, value
+                    beta = min(next_ply_score, beta)
+        return best_move, current_score
