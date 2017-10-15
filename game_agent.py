@@ -63,10 +63,6 @@ def custom_score(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    return 0.
-
-
-def x(game, player):
     opp = game.get_opponent(player)
     opp_moves = game.get_legal_moves(opp)
     p_moves = game.get_legal_moves()
@@ -469,6 +465,7 @@ class AlphaBetaPlayer(IsolationPlayer):
             current_score = float("inf")
 
         legal_moves = game.get_legal_moves()
+        best_move = legal_moves[0] if len(legal_moves) > 0 else (-1, -1)
 
         for move in legal_moves:
             next_ply_game = game.forecast_move(move)
